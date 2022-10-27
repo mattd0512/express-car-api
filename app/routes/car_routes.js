@@ -27,8 +27,32 @@ const requireToken = passport.authenticate('bearer', { session: false })
 // instantiate a router (mini app that only handles routes)
 const router = express.Router()
 
+// Index
+// /cars
+router.get('/cars', requireToken, (req, res, next) => {
+    Car.find()
+        .then(cars => {
+            return cars.map(car => car)
+        })
+        .then(cars => {
+            res.status(200).json({ cars: cars })
+        })
+        .catch(next)
+})
+
+// Show
+// /cars/:id
+router.get('/cars/:id', requireToken, (req, res, next) => {
+    Car.findById(req.params.id)
+    .then(handle404)
+    .then(car => {
+        res.status(200).json({ car: car })
+    })
+    .catch(next)
+})
+
 // Create
-// /pet
+// /cars
 router.post('/cars', requireToken, (req, res, next) => {
     req.body.car.owner = req.user.id
 
@@ -41,6 +65,19 @@ router.post('/cars', requireToken, (req, res, next) => {
     .catch(next)
     // .catch(error => next(error))
 
+})
+
+// Delete
+// /delete/cars/:id
+router.delete('/cars/:id', requireToken, (req, res, next) => {
+    Car.findById(req.params.id)
+    .then(handle404)
+    .then(car => {
+        requireOwnership(req, car)
+        car.deleteOne()
+    })
+    .then(() => res.sendStatus(204))
+    .catch(next)
 })
 
 
